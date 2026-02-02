@@ -3,7 +3,7 @@
   "name": "한양대 ERICA 공모전 허브",
   "short_name": "ERICA 공모전",
   "description": "한양대학교 ERICA 학생들을 위한 공모전, IC-PBL 정보 통합 플랫폼",
-  "id": "/",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
