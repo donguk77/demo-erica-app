@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
   <head>
@@ -10,7 +11,15 @@
       body {
         font-family: 'Noto Sans KR', sans-serif;
       }
-      /* Custom scrollbar for better aesthetics */
+      /* 가로 스크롤바 숨기기 */
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      /* Custom scrollbar for overall page */
       ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
@@ -41,5 +50,7 @@
 </head>
   <body class="bg-slate-50 text-slate-900 antialiased">
     <div id="root"></div>
+    <!-- Vercel 등 표준 환경에서 index.tsx를 실행하기 위한 태그 추가 -->
+    <script type="module" src="index.tsx"></script>
   </body>
 </html>

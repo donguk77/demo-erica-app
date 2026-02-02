@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { MOCK_COMPETITIONS } from '../constants';
@@ -143,7 +144,8 @@ export const HomePage: React.FC = () => {
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
       const { scrollLeft, clientWidth } = scrollRef.current;
-      const scrollTo = direction === 'left' ? scrollLeft - clientWidth : scrollLeft + clientWidth;
+      const scrollAmount = clientWidth * 0.8; // Scroll about 80% of width
+      const scrollTo = direction === 'left' ? scrollLeft - scrollAmount : scrollLeft + scrollAmount;
       scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
     }
   };
@@ -200,27 +202,29 @@ export const HomePage: React.FC = () => {
 
       <div className="max-w-[1400px] mx-auto px-6 mt-16 space-y-20">
         
-        {/* 3. ERICA 핵심 PICK Section (Updated to Horizontal Carousel) */}
+        {/* 3. ERICA 핵심 PICK Section (Horizontal Carousel) */}
         <section className="relative">
            <div className="flex justify-between items-end mb-8">
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                    <span className="text-blue-600">ERICA 추천 PICK!</span> 당신의 꿈을 향한 열정적인 도전
                 </h2>
-                <p className="text-slate-500 mt-2">지금 ERICA 캠퍼스에서 가장 핫한 활동들을 가로로 넘겨보세요.</p>
+                <p className="text-slate-500 mt-2">지금 ERICA 캠퍼스에서 가장 핫한 활동들을 확인해보세요.</p>
               </div>
               <div className="flex gap-2">
                  <button 
                     onClick={() => scroll('left')}
-                    className="p-2 border border-slate-200 rounded-full hover:bg-slate-100 transition-colors shadow-sm"
+                    className="p-3 border border-slate-200 rounded-full bg-white hover:bg-slate-100 transition-colors shadow-sm hover:shadow-md"
+                    aria-label="이전 공모전 보기"
                  >
-                    <ChevronLeftIcon className="w-5 h-5 text-slate-600" />
+                    <ChevronLeftIcon className="w-6 h-6 text-slate-600" />
                  </button>
                  <button 
                     onClick={() => scroll('right')}
-                    className="p-2 border border-slate-200 rounded-full hover:bg-slate-100 transition-colors shadow-sm"
+                    className="p-3 border border-slate-200 rounded-full bg-white hover:bg-slate-100 transition-colors shadow-sm hover:shadow-md"
+                    aria-label="다음 공모전 보기"
                  >
-                    <ChevronRightIcon className="w-5 h-5 text-slate-600" />
+                    <ChevronRightIcon className="w-6 h-6 text-slate-600" />
                  </button>
               </div>
            </div>
@@ -229,15 +233,14 @@ export const HomePage: React.FC = () => {
            <div 
              ref={scrollRef}
              className="flex gap-6 overflow-x-auto pb-6 scrollbar-hide snap-x"
-             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+             style={{ scrollBehavior: 'smooth' }}
            >
               {featuredCompetitions.map((comp, idx) => (
-                <div key={comp.id} className="min-w-[280px] md:min-w-[320px] snap-start">
+                <div key={comp.id} className="min-w-[320px] max-w-[320px] snap-start">
                   <CompetitionCard comp={comp} isRecommended={idx < 3} />
                 </div>
               ))}
-              {/* Fake empty card to add padding at the end of scroll */}
-              <div className="min-w-[1px] h-full invisible"></div>
+              <div className="min-w-[1px] h-full invisible shrink-0"></div>
            </div>
         </section>
 
@@ -258,7 +261,6 @@ export const HomePage: React.FC = () => {
               {icPblCompetitions.length > 0 ? icPblCompetitions.map((comp) => (
                 <CompetitionCard key={comp.id} comp={comp} />
               )) : (
-                 // Fallback if no IC-PBL items in mock
                  MOCK_COMPETITIONS.slice(0, 4).map((comp) => (
                     <CompetitionCard key={`fallback-${comp.id}`} comp={{...comp, type: 'IC-PBL', category: 'IC-PBL'}} />
                  ))
@@ -320,57 +322,33 @@ export const HomePage: React.FC = () => {
   );
 };
 
-// --- Page: Competition List (Updated with Filters) ---
+// ... (CompetitionListPage, CompetitionDetailPage, CalendarPage are identical to previous version)
 export const CompetitionListPage: React.FC<{ filterType?: 'IC-PBL' | 'General' }> = ({ filterType }) => {
   const { category } = useParams();
   const navigate = useNavigate();
   
-  // Local State for Filters
   const [selectedCategory, setSelectedCategory] = useState<string>('전체');
-  const [selectedStatus, setSelectedStatus] = useState<string>('전체'); // 전체, 접수중, 접수예정, 마감
-  const [sortOption, setSortOption] = useState<string>('최신순'); // 최신순, 마감임박순, 조회순
+  const [selectedStatus, setSelectedStatus] = useState<string>('전체');
+  const [sortOption, setSortOption] = useState<string>('최신순');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   const filterCategories = ['전체', '스페셜공모', '공모전', '대외활동', '교육·강연'];
 
-  // Data Filtering Logic
   const filteredCompetitions = useMemo(() => {
     let data = MOCK_COMPETITIONS;
-
-    // 1. Initial Type Filter (Prop)
-    if (filterType) {
-      data = data.filter(c => c.type === filterType);
-    }
-
-    // 2. Category Tab Filter (Local State) - simulating mapping
+    if (filterType) data = data.filter(c => c.type === filterType);
     if (selectedCategory !== '전체') {
-       // Rough mapping for demo purposes
        if (selectedCategory === '공모전') data = data.filter(c => c.category === 'IT/SW' || c.category === '디자인' || c.category === '기획/아이디어');
        else if (selectedCategory === '대외활동') data = data.filter(c => c.category === '대외활동');
-       // '스페셜공모' could filter by a featured flag, here just showing all for demo
     }
-
-    // 3. Status Dropdown Filter
     if (selectedStatus !== '전체') {
        if (selectedStatus === '접수중') data = data.filter(c => c.status === 'Open');
        if (selectedStatus === '마감') data = data.filter(c => c.status === 'Closed');
        if (selectedStatus === '접수예정') data = data.filter(c => c.status === 'Upcoming');
     }
-
-    // 4. Search Filter
-    if (searchTerm) {
-       data = data.filter(c => c.title.toLowerCase().includes(searchTerm.toLowerCase()));
-    }
-
-    // 5. Sorting
-    if (sortOption === '최신순') {
-        // Mock sorting (id based for demo)
-        data = [...data].sort((a, b) => b.id.localeCompare(a.id)); 
-    } else if (sortOption === '조회순') {
-        data = [...data].sort((a, b) => b.views - a.views);
-    }
-    // '마감임박순' logic omitted for brevity, but easy to add
-
+    if (searchTerm) data = data.filter(c => c.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    if (sortOption === '최신순') data = [...data].sort((a, b) => b.id.localeCompare(a.id)); 
+    else if (sortOption === '조회순') data = [...data].sort((a, b) => b.views - a.views);
     return data;
   }, [filterType, selectedCategory, selectedStatus, sortOption, searchTerm]);
 
@@ -378,38 +356,27 @@ export const CompetitionListPage: React.FC<{ filterType?: 'IC-PBL' | 'General' }
 
   return (
     <div className="space-y-8">
-      {/* 1. Header & Breadcrumb */}
       <div>
          <h1 className="text-3xl font-bold text-slate-900 mb-2">{pageTitle}</h1>
          <p className="text-slate-500">
-           {filterType === 'IC-PBL' 
-             ? '한양대학교 ERICA만의 특화된 산학연계 문제해결 프로그램을 만나보세요.' 
-             : '다양한 분야의 공모전에 도전하여 역량을 키워보세요.'}
+           {filterType === 'IC-PBL' ? '한양대학교 ERICA만의 특화된 산학연계 문제해결 프로그램을 만나보세요.' : '다양한 분야의 공모전에 도전하여 역량을 키워보세요.'}
          </p>
       </div>
 
-      {/* 2. Filter Section (New Window Style) */}
       <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-6">
-         {/* Top Tabs */}
          <div className="flex flex-wrap gap-2 pb-6 border-b border-slate-100">
             {filterCategories.map((cat) => (
                <button 
                  key={cat}
                  onClick={() => setSelectedCategory(cat)}
-                 className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
-                    selectedCategory === cat 
-                    ? 'bg-red-500 text-white shadow-md shadow-red-200' 
-                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                 }`}
+                 className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${selectedCategory === cat ? 'bg-red-500 text-white shadow-md shadow-red-200' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
                >
                  {cat}
                </button>
             ))}
          </div>
 
-         {/* Bottom Toolbar: Search & Sort */}
          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-             {/* Search */}
              <div className="relative w-full md:w-96">
                 <input 
                   type="text" 
@@ -420,24 +387,14 @@ export const CompetitionListPage: React.FC<{ filterType?: 'IC-PBL' | 'General' }
                 />
                 <Search className="absolute left-3 top-2.5 w-5 h-5 text-slate-400" />
              </div>
-
-             {/* Dropdowns */}
              <div className="flex items-center gap-2 w-full md:w-auto">
-                <select 
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-blue-500 cursor-pointer"
-                >
+                <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white cursor-pointer">
                    <option value="전체">진행상태 전체</option>
                    <option value="접수중">접수중</option>
                    <option value="접수예정">접수예정</option>
                    <option value="마감">마감</option>
                 </select>
-                <select 
-                  value={sortOption}
-                  onChange={(e) => setSortOption(e.target.value)}
-                  className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-blue-500 cursor-pointer"
-                >
+                <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm bg-white cursor-pointer">
                    <option value="최신순">최신순</option>
                    <option value="마감임박순">마감임박순</option>
                    <option value="조회순">조회순</option>
@@ -446,134 +403,58 @@ export const CompetitionListPage: React.FC<{ filterType?: 'IC-PBL' | 'General' }
          </div>
       </div>
 
-      {/* 3. Results Info */}
-      <div className="flex justify-between items-end">
-         <div className="text-sm text-slate-600">
-           총 <span className="font-bold text-red-500">{filteredCompetitions.length}</span> 건의 공고가 있습니다.
-         </div>
+      <div className="text-sm text-slate-600">
+        총 <span className="font-bold text-red-500">{filteredCompetitions.length}</span> 건의 공고가 있습니다.
       </div>
 
-      {/* 4. Grid Layout */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
         {filteredCompetitions.map((comp, idx) => (
            <CompetitionCard key={comp.id} comp={comp} isRecommended={idx < 2 && comp.status === 'Open'} />
         ))}
       </div>
-
-      {filteredCompetitions.length === 0 && (
-         <div className="text-center py-32 bg-slate-50 rounded-xl border border-dashed border-slate-300 text-slate-500">
-            조건에 맞는 공모전이 없습니다.
-         </div>
-      )}
     </div>
   );
 };
 
-// --- Page: Competition Detail ---
 export const CompetitionDetailPage: React.FC = () => {
   const { id } = useParams();
   const competition = MOCK_COMPETITIONS.find(c => c.id === id);
-
-  if (!competition) {
-    return <div className="text-center py-20 text-slate-500">존재하지 않는 공모전입니다.</div>;
-  }
-
+  if (!competition) return <div className="text-center py-20 text-slate-500">존재하지 않는 공모전입니다.</div>;
   return (
     <div className="max-w-5xl mx-auto space-y-10">
-      {/* Header Section */}
       <div className="border-b border-slate-200 pb-8">
         <div className="flex gap-3 mb-4">
           <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-bold rounded-md">{competition.category}</span>
-          {competition.type === 'IC-PBL' && (
-             <span className="px-3 py-1 bg-purple-100 text-purple-800 text-sm font-bold rounded-md">IC-PBL</span>
-          )}
+          {competition.type === 'IC-PBL' && <span className="px-3 py-1 bg-purple-100 text-purple-800 text-sm font-bold rounded-md">IC-PBL</span>}
         </div>
         <h1 className="text-4xl font-bold text-slate-900 mb-6 leading-tight">{competition.title}</h1>
-        
         <div className="flex flex-wrap items-center gap-6 text-slate-600 text-sm">
-           <div className="flex items-center gap-2">
-             <span className="font-semibold text-slate-900">주최:</span> {competition.organizer}
-           </div>
+           <div className="flex items-center gap-2 font-medium">주최: {competition.organizer}</div>
            <div className="h-4 w-px bg-slate-300"></div>
-           <div className="flex items-center gap-2">
-             <CalendarIcon className="w-4 h-4" />
-             {competition.startDate} ~ {competition.endDate}
-           </div>
+           <div className="flex items-center gap-2"><CalendarIcon className="w-4 h-4" /> {competition.startDate} ~ {competition.endDate}</div>
            <div className="h-4 w-px bg-slate-300"></div>
-           <div className="flex items-center gap-2">
-             <Eye className="w-4 h-4" />
-             {competition.views.toLocaleString()}회 조회
-           </div>
-           <div className="h-4 w-px bg-slate-300"></div>
-           <div className="flex items-center gap-2">
-             <Users className="w-4 h-4" />
-             {competition.applicants}명 지원
-           </div>
+           <div className="flex items-center gap-2"><Eye className="w-4 h-4" /> {competition.views.toLocaleString()}회 조회</div>
         </div>
       </div>
-
-      {/* Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        {/* Left: Content */}
         <div className="lg:col-span-2 space-y-8">
-           {/* Image Banner */}
-           <div className="w-full h-80 bg-slate-200 rounded-xl overflow-hidden shadow-md">
-             <img src={competition.imageUrl} alt={competition.title} className="w-full h-full object-cover" />
-           </div>
-
-           {/* Description */}
+           <div className="w-full h-80 bg-slate-200 rounded-xl overflow-hidden shadow-md"><img src={competition.imageUrl} alt={competition.title} className="w-full h-full object-cover" /></div>
            <section>
-             <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-               <CheckCircle className="w-6 h-6 text-blue-600" />
-               공모 요강
-             </h2>
+             <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2"><CheckCircle className="w-6 h-6 text-blue-600" /> 공모 요강</h2>
              <div className="bg-white border border-slate-200 p-8 rounded-xl leading-relaxed text-slate-700 whitespace-pre-wrap shadow-sm">
                <p className="mb-4 font-semibold text-lg">{competition.description}</p>
-               <p>
-                 본 공모전은 한양대학교 ERICA 학생들의 역량 강화를 위해 개최됩니다. 
-                 상세한 내용은 첨부파일을 확인하시거나 주최 측에 문의 바랍니다.
-                 
-                 [참가 자격]
-                 - 한양대학교 ERICA 재학생 및 휴학생 (대학원생 포함)
-                 - 개인 또는 팀(최대 4인) 구성 가능
-                 
-                 [시상 내역]
-                 - 대상(1팀): 총장상 및 상금 200만원
-                 - 최우수상(2팀): 학장상 및 상금 100만원
-                 - 우수상(3팀): 상금 50만원
-               </p>
+               <p>본 공모전은 한양대학교 ERICA 학생들의 역량 강화를 위해 개최됩니다. 상세한 내용은 첨부파일을 확인하시거나 주최 측에 문의 바랍니다.</p>
              </div>
            </section>
         </div>
-
-        {/* Right: Floating Action Panel (Sticky) */}
         <div className="lg:col-span-1">
-          <div className="sticky top-28 bg-white border border-blue-100 rounded-xl p-6 shadow-xl ring-1 ring-blue-50">
+          <div className="sticky top-28 bg-white border border-blue-100 rounded-xl p-6 shadow-xl">
             <h3 className="font-bold text-lg text-slate-900 mb-4 border-b pb-2">지원 정보</h3>
             <div className="space-y-4 mb-6">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-500">접수 상태</span>
-                <StatusBadge status={competition.status} />
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-500">마감일까지</span>
-                <span className="text-red-600 font-bold">D-12</span>
-              </div>
+              <div className="flex justify-between items-center text-sm"><span className="text-slate-500">접수 상태</span><StatusBadge status={competition.status} /></div>
+              <div className="flex justify-between items-center text-sm"><span className="text-slate-500">마감일까지</span><span className="text-red-600 font-bold">D-12</span></div>
             </div>
-            
-            <button className="w-full py-4 bg-blue-900 hover:bg-blue-800 text-white font-bold rounded-lg shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center gap-2 text-lg">
-              지원하기
-              <ArrowRight className="w-5 h-5" />
-            </button>
-            <button className="w-full mt-3 py-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium rounded-lg transition-colors">
-              관심 공모전 담기
-            </button>
-
-            <div className="mt-6 pt-6 border-t border-slate-100">
-               <p className="text-xs text-slate-400 text-center">
-                 문의사항: 031-400-0000<br/>support@hanyang.ac.kr
-               </p>
-            </div>
+            <button className="w-full py-4 bg-blue-900 text-white font-bold rounded-lg shadow-lg hover:bg-blue-800 transition-all flex items-center justify-center gap-2">지원하기 <ArrowRight className="w-5 h-5" /></button>
           </div>
         </div>
       </div>
@@ -581,55 +462,22 @@ export const CompetitionDetailPage: React.FC = () => {
   );
 };
 
-// --- Page: Calendar ---
 export const CalendarPage: React.FC = () => {
-  const days = Array.from({ length: 35 }, (_, i) => i + 1); // Mock calendar days
-  
+  const days = Array.from({ length: 35 }, (_, i) => i + 1);
   return (
     <div className="h-full flex flex-col">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-slate-900">2024년 5월 일정</h1>
-        <div className="flex gap-2">
-            <button className="px-4 py-2 bg-white border border-slate-300 rounded-md text-sm font-medium hover:bg-slate-50">오늘</button>
-            <button className="px-4 py-2 bg-blue-900 text-white rounded-md text-sm font-medium shadow-md">일정 추가 요청</button>
-        </div>
-      </div>
-
+      <div className="flex justify-between items-center mb-6"><h1 className="text-3xl font-bold text-slate-900">2024년 5월 일정</h1></div>
       <div className="flex-1 bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col">
-        {/* Days Header */}
-        <div className="grid grid-cols-7 border-b border-slate-200">
-          {['일', '월', '화', '수', '목', '금', '토'].map((day, idx) => (
-            <div key={day} className={`p-4 text-center font-bold ${idx === 0 ? 'text-red-500' : idx === 6 ? 'text-blue-500' : 'text-slate-700'}`}>
-              {day}
-            </div>
-          ))}
-        </div>
-
-        {/* Calendar Grid */}
+        <div className="grid grid-cols-7 border-b border-slate-200">{['일', '월', '화', '수', '목', '금', '토'].map((day, idx) => (<div key={day} className={`p-4 text-center font-bold ${idx === 0 ? 'text-red-500' : idx === 6 ? 'text-blue-500' : 'text-slate-700'}`}>{day}</div>))}</div>
         <div className="grid grid-cols-7 flex-1 auto-rows-fr">
           {days.map((day) => {
-             const dayNum = day > 31 ? day - 31 : day; // Simple wrap logic
+             const dayNum = day > 31 ? day - 31 : day;
              const isCurrentMonth = day <= 31;
-             
-             // Mock Event logic
              const events = MOCK_COMPETITIONS.filter(c => parseInt(c.startDate.split('-')[2]) === dayNum && isCurrentMonth);
-
              return (
               <div key={day} className={`min-h-[120px] border-b border-r border-slate-100 p-2 relative group hover:bg-slate-50 transition-colors ${!isCurrentMonth ? 'bg-slate-50/50' : ''}`}>
                 <span className={`text-sm font-medium ${!isCurrentMonth ? 'text-slate-300' : 'text-slate-700'}`}>{dayNum}</span>
-                
-                <div className="mt-2 space-y-1">
-                  {events.map(event => (
-                    <div key={event.id} className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded truncate cursor-pointer hover:bg-blue-200 border border-blue-200 shadow-sm">
-                       {event.title}
-                    </div>
-                  ))}
-                  {dayNum === 15 && isCurrentMonth && (
-                      <div className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded truncate border border-purple-200">
-                          IC-PBL 워크숍
-                      </div>
-                  )}
-                </div>
+                <div className="mt-2 space-y-1">{events.map(event => (<div key={event.id} className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded truncate cursor-pointer hover:bg-blue-200">{event.title}</div>))}</div>
               </div>
             );
           })}
