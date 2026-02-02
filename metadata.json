@@ -1,5 +1,5 @@
 {
   "name": "ERICA Competition Hub",
-  "description": "A comprehensive platform for Hanyang University ERICA students to manage and participate in competitions, IC-PBL projects, and view schedules.",
+  "description": "A comprehensive PWA platform for Hanyang University ERICA students to manage and participate in competitions, IC-PBL projects, and view schedules.",
   "requestFramePermissions": []
 }
