@@ -12,7 +12,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="ERICA 공모전" />
     
-    <!-- 아이콘 업데이트 (제공된 이미지 스타일 반영) -->
     <link rel="apple-touch-icon" href="https://img.icons8.com/ios-filled/512/002a5b/graduation-cap.png" />
     <link rel="icon" type="image/png" href="https://img.icons8.com/ios-filled/512/002a5b/graduation-cap.png" />
     <link rel="manifest" href="manifest.webmanifest" />
@@ -61,6 +60,7 @@
 </head>
   <body class="bg-slate-50 text-slate-900 antialiased">
     <div id="root"></div>
-    <script type="module" src="index.tsx"></script>
+    <!-- Vercel 등에서 확실한 로드를 위해 상대 경로 대신 명확한 명칭 사용 -->
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>
